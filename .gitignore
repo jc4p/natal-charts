@@ -1,0 +1,6 @@
+.DS_Store
+Thumbs.db
+*.py[co]
+venv
+node_modules
+local.env

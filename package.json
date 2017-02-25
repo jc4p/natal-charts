@@ -1,0 +1,43 @@
+{
+  "name": "kasra-natal-charts",
+  "version": "0.0.1",
+  "description": "idk we'll see",
+  "main": "devserver.js",
+  "license": "ISC",
+  "scripts": {
+    "start": "webpack-dev-server --hot --watch-poll",
+    "dev": "concurrently -k 'webpack-dev-server --hot --watch-poll' 'python api/main.py'"
+  },
+  "babel": {
+    "presets": [
+      "es2015"
+    ],
+    "plugins": [
+      [
+        "transform-react-jsx",
+        {
+          "pragma": "h"
+        }
+      ]
+    ]
+  },
+  "devDependencies": {},
+  "dependencies": {
+    "babel-core": "^6.23.1",
+    "babel-loader": "^6.3.2",
+    "babel-plugin-transform-class-properties": "^6.23.0",
+    "babel-plugin-transform-react-jsx": "^6.23.0",
+    "babel-preset-es2015": "^6.22.0",
+    "chokidar": "^1.6.1",
+    "concurrently": "^3.3.0",
+    "css-loader": "^0.26.2",
+    "less-loader": "^2.2.3",
+    "moment": "^2.17.1",
+    "preact": "^7.2.0",
+    "preact-compat": "^3.13.1",
+    "react-select": "^1.0.0-rc.3",
+    "style-loader": "^0.13.2",
+    "webpack": "^2.2.1",
+    "webpack-dev-server": "^2.4.1"
+  }
+}
