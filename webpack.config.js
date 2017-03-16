@@ -1,3 +1,4 @@
+var webpack = require('webpack');
 var path = require('path');
 
 module.exports = {
@@ -9,7 +10,8 @@ module.exports = {
   module: {
     rules: [
       { test: /\.js$/, exclude: /node_modules/, use: [ { loader: "babel-loader" } ] },
-      { test: /\.css$/, use: [ { loader: 'style-loader'}, { 'loader': 'css-loader' } ] }
+      { test: /\.css$/, use: [ { loader: 'style-loader'}, { 'loader': 'css-loader' } ] },
+      { test: /\.scss$/, use: [ 'style-loader', 'css-loader', 'sass-loader' ] }
     ]
   },
   resolve: {
@@ -18,6 +20,15 @@ module.exports = {
       'react-dom': 'preact-compat'
     }
   },
+  plugins: [
+    new webpack.optimize.UglifyJsPlugin({
+      compress: {
+        warnings: false,
+        drop_console: false
+      }
+    }),
+  ],
+  devtool: 'cheap-module-eval-source-map',
   devServer: {
     port: 3000
   }
