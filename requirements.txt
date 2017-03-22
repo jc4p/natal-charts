@@ -8,7 +8,6 @@ itsdangerous==0.24
 Jinja2==2.9.5
 MarkupSafe==0.23
 packaging==16.8
-pkg-resources==0.0.0
 pyparsing==2.1.10
 pyswisseph==2.0.0.post2
 ratelim==0.1.6
