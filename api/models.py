@@ -1,7 +1,10 @@
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
-from flatlib import const
+from flatlib import const, aspects
+
+ASPECT_LABELS = {0: 'conjunction', 60: 'sextile', 90: 'square', 120: 'trine', 180: 'opposition'}
+ASPECT_PLANETS = const.LIST_SEVEN_PLANETS + ['Uranus', 'Neptune', 'Pluto']
 
 class Person:
   """Wrapper for API query input, person and birth info"""
@@ -34,10 +37,9 @@ class NatalChart:
     self.planets = {}
     self.houses = {}
     self.person = person
-
     date = Datetime(person.birth_date_str(), person.birth_time_str(), person.birth_utc_offset)
     pos = GeoPos(person.birth_lat, person.birth_lon)
-    chart = Chart(date, pos)
+    chart = Chart(date, pos, IDs=const.LIST_OBJECTS)
 
     for body in const.LIST_SEVEN_PLANETS:
       self.planets[body] = NatalPlanet(chart, body)
@@ -67,12 +69,33 @@ class NatalPlanet:
   def __init__(self, chart, body):
     self.planet = chart.get(body)
     self.house = chart.houses.getObjectHouse(self.planet).id
+    self.aspects = []
+
+    for other_body in const.LIST_OBJECTS:
+      other_planet = chart.get(other_body)
+      aspect = aspects.getAspect(self.planet, other_planet, const.MAJOR_ASPECTS)
+      if aspect.type != -1:
+        aspect_part = aspect.active if aspect.active.id != body else aspect.passive
+        if aspect_part.id not in ASPECT_PLANETS:
+          # don't care about Lilith and nodes
+          continue
+        if aspect.orb > 5:
+          # maybe #TODO: use different values per type?
+          continue
+        self.aspects.append({
+          'first': self.planet.id, 'second': aspect_part.id, 
+          'type': aspect.type, 'type_name': ASPECT_LABELS[aspect.type],
+          'orb': aspect.orb
+        })
 
   def to_dict(self):
-    return {
+    obj = {
       'planet': self.planet.__dict__,
-      'house': self.house
+      'house': self.house,
     }
+    if self.aspects:
+      obj['aspects'] = [x for x in self.aspects]
+    return obj
 
   def __repr__(self):
     return "<Natal Planet {} in {}>".format(self.planet, self.house)

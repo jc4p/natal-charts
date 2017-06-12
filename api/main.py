@@ -22,9 +22,10 @@ def geocode():
   tz = geocoder.google([g.lat, g.lng], method="timezone", key=GOOGLE_API_KEY)
 
   # E.g. -18000 --> -05:00 // 12600 --> +3:30
-  tz_offset_negative = tz.rawOffset < 0
-  tz_offset_hours = int(abs(tz.rawOffset)/60//60)
-  tz_offset_minutes = int((abs(tz.rawOffset)/60/60 - tz_offset_hours) * 60)
+  tz_offset = tz.rawOffset + tz.dstOffset  # we want to ignore daylight savings for this
+  tz_offset_negative = tz_offset < 0
+  tz_offset_hours = int(abs(tz_offset)/60//60)
+  tz_offset_minutes = int((abs(tz_offset)/60/60 - tz_offset_hours) * 60)
 
   return jsonify({
     'query': query,
@@ -50,8 +51,8 @@ def chart():
     if el == -1:
       return jsonify({'error': "Invalid input: birthdate"})
 
-  birth_lon = request.form.get('location_lon', 0.0, type=float)
   birth_lat = request.form.get('location_lat', 0.0, type=float)
+  birth_lon = request.form.get('location_lon', 0.0, type=float)
 
   if birth_lon == 0.0 or birth_lat == 0.0:
     return jsonify({'error': "Invalid input: birth geo"})
@@ -59,7 +60,7 @@ def chart():
   birth_utc_offset = request.form.get('location_utc_offset', '+00:00')
   
   birthdate = datetime(birth_year, birth_month, birth_day, birth_hour, 0, 0, tzinfo=timezone.utc)
-  person = Person(name, birthdate, birth_lon, birth_lat, birth_utc_offset)
+  person = Person(name, birthdate, birth_lat, birth_lon, birth_utc_offset)
   chart = NatalChart(person)
 
   return jsonify(chart.to_dict())
