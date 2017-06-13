@@ -19,7 +19,24 @@ def geocode():
   g = geocoder.google(query, key=GOOGLE_API_KEY)
   if not g or g.status != 'OK':
     return jsonify({'error': "Unable to find location"})
-  tz = geocoder.google([g.lat, g.lng], method="timezone", key=GOOGLE_API_KEY)
+
+  time_year = request.form.get('time_year', -1, type=int)
+  time_month = request.form.get('time_month', -1, type=int)
+  time_day = request.form.get('time_day', -1, type=int)
+  time_hour = request.form.get('time_hour', -1, type=int)
+
+  timezone_time = None
+  for el in [time_year, time_month, time_day, time_hour]:
+    if el == -1:
+      timezone_time = datetime.utcnow()
+      break
+
+  if not timezone_time:
+    timezone_time = datetime(time_year, time_month, time_day, time_hour, 0, 0, tzinfo=timezone.utc)
+
+  print(timezone_time)
+  tz = geocoder.google([g.lat, g.lng], timestamp=timezone_time.timestamp(),
+          method="timezone", key=GOOGLE_API_KEY)
 
   # E.g. -18000 --> -05:00 // 12600 --> +3:30
   tz_offset = tz.rawOffset + tz.dstOffset  # we want to ignore daylight savings for this
@@ -46,6 +63,7 @@ def chart():
   birth_month = request.form.get('date_month', -1, type=int)
   birth_day = request.form.get('date_day', -1, type=int)
   birth_hour = request.form.get('date_hour', -1, type=int)
+  birth_min = request.form.get('date_min', 0, type=int)
 
   for el in [birth_year, birth_month, birth_day, birth_hour]:
     if el == -1:
@@ -59,7 +77,7 @@ def chart():
 
   birth_utc_offset = request.form.get('location_utc_offset', '+00:00')
   
-  birthdate = datetime(birth_year, birth_month, birth_day, birth_hour, 0, 0, tzinfo=timezone.utc)
+  birthdate = datetime(birth_year, birth_month, birth_day, birth_hour, birth_min, 0, tzinfo=timezone.utc)
   person = Person(name, birthdate, birth_lat, birth_lon, birth_utc_offset)
   chart = NatalChart(person)
 

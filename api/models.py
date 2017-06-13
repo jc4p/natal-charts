@@ -4,7 +4,7 @@ from flatlib.chart import Chart
 from flatlib import const, aspects
 
 ASPECT_LABELS = {0: 'conjunction', 60: 'sextile', 90: 'square', 120: 'trine', 180: 'opposition'}
-ASPECT_PLANETS = const.LIST_SEVEN_PLANETS + ['Uranus', 'Neptune', 'Pluto']
+LIST_PLANETS = const.LIST_SEVEN_PLANETS + ['Uranus', 'Neptune', 'Pluto']
 
 class Person:
   """Wrapper for API query input, person and birth info"""
@@ -41,7 +41,7 @@ class NatalChart:
     pos = GeoPos(person.birth_lat, person.birth_lon)
     chart = Chart(date, pos, IDs=const.LIST_OBJECTS)
 
-    for body in const.LIST_SEVEN_PLANETS:
+    for body in LIST_PLANETS:
       self.planets[body] = NatalPlanet(chart, body)
 
     for house in const.LIST_HOUSES:
@@ -71,12 +71,18 @@ class NatalPlanet:
     self.house = chart.houses.getObjectHouse(self.planet).id
     self.aspects = []
 
+    for house_id in const.LIST_HOUSES:
+      house = chart.get(house_id)
+      if house.sign == self.planet.sign:
+        self.house = house_id
+        break
+
     for other_body in const.LIST_OBJECTS:
       other_planet = chart.get(other_body)
       aspect = aspects.getAspect(self.planet, other_planet, const.MAJOR_ASPECTS)
       if aspect.type != -1:
         aspect_part = aspect.active if aspect.active.id != body else aspect.passive
-        if aspect_part.id not in ASPECT_PLANETS:
+        if aspect_part.id not in LIST_PLANETS:
           # don't care about Lilith and nodes
           continue
         if aspect.orb > 5:
