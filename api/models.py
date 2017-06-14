@@ -4,7 +4,7 @@ from flatlib.chart import Chart
 from flatlib import const, aspects
 
 ASPECT_LABELS = {0: 'conjunction', 60: 'sextile', 90: 'square', 120: 'trine', 180: 'opposition'}
-LIST_PLANETS = const.LIST_SEVEN_PLANETS + ['Uranus', 'Neptune', 'Pluto']
+LIST_PLANETS = const.LIST_SEVEN_PLANETS + ['Uranus', 'Neptune', 'Pluto', 'House1']
 
 class Person:
   """Wrapper for API query input, person and birth info"""
@@ -56,7 +56,7 @@ class NatalChart:
         'birth_utc_offset': self.person.birth_utc_offset
       },
       'chart': {
-        'planets': {k: self.planets[k].to_dict() for k in self.planets},
+        'planets': {self.planets[k].name: self.planets[k].to_dict() for k in self.planets},
         'houses': {k: self.houses[k].to_dict() for k in self.houses}
       }
     }
@@ -70,6 +70,7 @@ class NatalPlanet:
     self.planet = chart.get(body)
     self.house = chart.houses.getObjectHouse(self.planet).id
     self.aspects = []
+    self.name = body if body != 'House1' else 'Ascendant'
 
     for house_id in const.LIST_HOUSES:
       house = chart.get(house_id)
@@ -77,7 +78,7 @@ class NatalPlanet:
         self.house = house_id
         break
 
-    for other_body in const.LIST_OBJECTS:
+    for other_body in LIST_PLANETS:
       other_planet = chart.get(other_body)
       aspect = aspects.getAspect(self.planet, other_planet, const.MAJOR_ASPECTS)
       if aspect.type != -1:

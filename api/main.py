@@ -34,7 +34,6 @@ def geocode():
   if not timezone_time:
     timezone_time = datetime(time_year, time_month, time_day, time_hour, 0, 0, tzinfo=timezone.utc)
 
-  print(timezone_time)
   tz = geocoder.google([g.lat, g.lng], timestamp=timezone_time.timestamp(),
           method="timezone", key=GOOGLE_API_KEY)
 
