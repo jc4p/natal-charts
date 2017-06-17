@@ -4,7 +4,7 @@ from flatlib.chart import Chart
 from flatlib import const, aspects
 
 ASPECT_LABELS = {0: 'conjunction', 60: 'sextile', 90: 'square', 120: 'trine', 180: 'opposition'}
-LIST_PLANETS = const.LIST_SEVEN_PLANETS + ['Uranus', 'Neptune', 'Pluto', 'House1']
+LIST_PLANETS = const.LIST_SEVEN_PLANETS + [const.URANUS, const.NEPTUNE, const.PLUTO, const.ASC]
 
 class Person:
   """Wrapper for API query input, person and birth info"""
@@ -39,8 +39,8 @@ class NatalChart:
     self.person = person
     date = Datetime(person.birth_date_str(), person.birth_time_str(), person.birth_utc_offset)
     pos = GeoPos(person.birth_lat, person.birth_lon)
-    chart = Chart(date, pos, IDs=const.LIST_OBJECTS)
-
+    chart = Chart(date, pos, IDs=const.LIST_OBJECTS, hsys=const.HOUSES_PLACIDUS)
+    print(chart.houses.get('House1'))
     for body in LIST_PLANETS:
       self.planets[body] = NatalPlanet(chart, body)
 
@@ -70,7 +70,7 @@ class NatalPlanet:
     self.planet = chart.get(body)
     self.house = chart.houses.getObjectHouse(self.planet).id
     self.aspects = []
-    self.name = body if body != 'House1' else 'Ascendant'
+    self.name = body if body != 'Asc' else 'Ascendant'
 
     for house_id in const.LIST_HOUSES:
       house = chart.get(house_id)
@@ -90,7 +90,7 @@ class NatalPlanet:
           # maybe #TODO: use different values per type?
           continue
         self.aspects.append({
-          'first': self.planet.id, 'second': aspect_part.id, 
+          'first': self.name, 'second': aspect_part.id,
           'type': aspect.type, 'type_name': ASPECT_LABELS[aspect.type],
           'orb': aspect.orb
         })

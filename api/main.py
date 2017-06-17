@@ -83,5 +83,30 @@ def chart():
   return jsonify(chart.to_dict())
 
 
+@app.route('/day', methods=['POST'])
+def day():
+  # Hardcoded for now
+  location = [-33.4488897, -70.6692655]
+  location_offset = '-04:00'
+
+  time_year = request.form.get('time_year', -1, type=int)
+  time_month = request.form.get('time_month', -1, type=int)
+  time_day = request.form.get('time_day', -1, type=int)
+  time_hour = request.form.get('time_hour', -1, type=int)
+
+  chart_time = None
+  for el in [time_year, time_month, time_day, time_hour]:
+    if el == -1:
+      chart_time = datetime.utcnow()
+      break
+
+  if not chart_time:
+    chart_time = datetime(time_year, time_month, time_day, time_hour, 0, 0, tzinfo=timezone.utc)
+  # TODO: Daylight savings might be different in this time in the location, so offset might be off-by-one.
+  person = Person(chart_time.timestamp(), chart_time, location[0], location[1], location_offset)
+  chart = NatalChart(person)
+
+  return jsonify(chart.to_dict())
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=os.environ.get('PORT', 8080))
