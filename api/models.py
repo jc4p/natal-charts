@@ -40,7 +40,7 @@ class NatalChart:
     date = Datetime(person.birth_date_str(), person.birth_time_str(), person.birth_utc_offset)
     pos = GeoPos(person.birth_lat, person.birth_lon)
     chart = Chart(date, pos, IDs=const.LIST_OBJECTS, hsys=const.HOUSES_PLACIDUS)
-    print(chart.houses.get('House1'))
+
     for body in LIST_PLANETS:
       self.planets[body] = NatalPlanet(chart, body)
 
@@ -86,7 +86,7 @@ class NatalPlanet:
         if aspect_part.id not in LIST_PLANETS:
           # don't care about Lilith and nodes
           continue
-        if aspect.orb > 5:
+        if aspect.orb > 7:
           # maybe #TODO: use different values per type?
           continue
         self.aspects.append({
