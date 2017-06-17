@@ -86,7 +86,7 @@ class NatalPlanet:
         if aspect_part.id not in LIST_PLANETS:
           # don't care about Lilith and nodes
           continue
-        if aspect.orb > 7:
+        if aspect.orb > 10:
           # maybe #TODO: use different values per type?
           continue
         self.aspects.append({
