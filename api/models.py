@@ -37,15 +37,16 @@ class NatalChart:
     self.planets = {}
     self.houses = {}
     self.person = person
+
     date = Datetime(person.birth_date_str(), person.birth_time_str(), person.birth_utc_offset)
     pos = GeoPos(person.birth_lat, person.birth_lon)
-    chart = Chart(date, pos, IDs=const.LIST_OBJECTS, hsys=const.HOUSES_PLACIDUS)
+    self.chart = Chart(date, pos, IDs=const.LIST_OBJECTS, hsys=const.HOUSES_PLACIDUS)
 
     for body in LIST_PLANETS:
-      self.planets[body] = NatalPlanet(chart, body)
+      self.planets[body] = NatalPlanet(self.chart, body)
 
     for house in const.LIST_HOUSES:
-      self.houses[house] = NatalHouse(chart, house)
+      self.houses[house] = NatalHouse(self.chart, house)
 
   def to_dict(self):
     output = {

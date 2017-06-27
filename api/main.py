@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from datetime import datetime, timezone
 from models import *
+from utils import get_chart_aspects_for_planet
 import geocoder
 import os
 
@@ -107,6 +108,46 @@ def day():
   chart = NatalChart(person)
 
   return jsonify(chart.to_dict())
+
+
+@app.route('/person-aspects', methods=['POST'])
+def person_aspects():
+  first_timestamp = request.form.get('first_time', 0, type=int)
+  second_timestamp = request.form.get('second_time', 0, type=int)
+
+  if first_timestamp == 0 or second_timestamp == 0:
+    return jsonify({'error': "Invalid input: timestamps"})
+
+  first_time = datetime.utcfromtimestamp(first_timestamp)
+  second_time = datetime.utcfromtimestamp(second_timestamp)
+
+  first_lat = request.form.get('first_lat', 0.0, type=float)
+  first_lon = request.form.get('first_lon', 0.0, type=float)
+
+  second_lat = request.form.get('second_lat', 0.0, type=float)
+  second_lon = request.form.get('second_lon', 0.0, type=float)
+
+  if first_lat == 0.0 or first_lon == 0.0 or second_lat == 0.0 or second_lon == 0.0:
+    return jsonify({'error': "Invalid input: locations"})
+
+  first_offset = request.form.get('first_utc_offset', '+00:00')
+  second_offset = request.form.get('second_utc_offset', '+00:00')
+
+  first = NatalChart(Person("First", first_time, first_lat, first_lon, first_offset))
+  second = NatalChart(Person("Second", second_time, second_lat, second_lon, second_offset))
+
+  all_aspects = []
+  for i in range(len(LIST_PLANETS)):
+      p = LIST_PLANETS[i]
+
+      for a in get_chart_aspects_for_planet(p, first.chart, second.chart):
+          if LIST_PLANETS.index(a['second']) < i:
+              # We already have it !
+              continue
+          all_aspects.append(a)
+
+  return jsonify(all_aspects)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=os.environ.get('PORT', 8080))
