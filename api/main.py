@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from datetime import datetime, timezone
 from models import *
-from utils import get_chart_aspects_for_planet
+from utils import get_chart_aspects_for_planet, crossdomain
 import geocoder
 import os
 
@@ -54,6 +54,7 @@ def geocode():
 
 
 @app.route('/chart', methods=['POST'])
+@crossdomain(origin='https://cat-charts-dashboard.glitch.me/')
 def chart():
   name = request.form.get('name')
   if not name:
@@ -86,25 +87,23 @@ def chart():
 
 @app.route('/day', methods=['POST'])
 def day():
-  # Hardcoded for now
-  location = [-33.4488897, -70.6692655]
-  location_offset = '-04:00'
+  location_lat = request.form.get('location_lat', 0.0, type=float)
+  location_lon = request.form.get('location_lon', 0.0, type=float)
 
-  time_year = request.form.get('time_year', -1, type=int)
-  time_month = request.form.get('time_month', -1, type=int)
-  time_day = request.form.get('time_day', -1, type=int)
-  time_hour = request.form.get('time_hour', -1, type=int)
+  if location_lat == 0.0 or location_lon == 0.0:
+    return jsonify({'error': "Invalid input: birth location"})
 
-  chart_time = None
-  for el in [time_year, time_month, time_day, time_hour]:
-    if el == -1:
-      chart_time = datetime.utcnow()
-      break
+  #TODO: The location's daylight savings might be different at the moment vs birth time !
+  location_offset = request.form.get('location_utc_offset', '+00:00')
 
-  if not chart_time:
-    chart_time = datetime(time_year, time_month, time_day, time_hour, 0, 0, tzinfo=timezone.utc)
-  # TODO: Daylight savings might be different in this time in the location, so offset might be off-by-one.
-  person = Person(chart_time.timestamp(), chart_time, location[0], location[1], location_offset)
+  moment_timestamp = request.form.get('moment_time', 0, type=int)
+
+  if moment_timestamp == 0 :
+    return jsonify({'error': "Invalid input: timestamp"})
+
+  moment_time = datetime.utcfromtimestamp(moment_timestamp)
+
+  person = Person(moment_timestamp, moment_time, location_lat, location_lon, location_offset)
   chart = NatalChart(person)
 
   return jsonify(chart.to_dict())
@@ -145,6 +144,51 @@ def person_aspects():
               # We already have it !
               continue
           all_aspects.append(a)
+
+  return jsonify(all_aspects)
+
+
+@app.route('/transits', methods=['POST'])
+def transits():
+  person_timestamp = request.form.get('person_time', 0, type=int)
+  moment_timestamp = request.form.get('moment_time', 0, type=int)
+
+  if person_timestamp == 0 or moment_timestamp == 0:
+    return jsonify({'error': "Invalid input: timestamps"})
+
+  person_time = datetime.utcfromtimestamp(person_timestamp)
+  moment_time = datetime.utcfromtimestamp(moment_timestamp)
+
+  location_lat = request.form.get('location_lat', 0.0, type=float)
+  location_lon = request.form.get('location_lon', 0.0, type=float)
+
+  if location_lat == 0.0 or location_lon == 0.0:
+    return jsonify({'error': "Invalid input: birth location"})
+
+  #TODO: The location's daylight savings might be different at the moment vs birth time !
+  location_offset = request.form.get('location_utc_offset', '+00:00')
+
+  person = NatalChart(Person("Person", person_time, location_lat, location_lon, location_offset))
+  moment = NatalChart(Person("Moment", moment_time, location_lat, location_lon, location_offset))
+
+  all_aspects = []
+  for i in range(len(LIST_PLANETS)):
+      p = LIST_PLANETS[i]
+
+      for a in get_chart_aspects_for_planet(p, person.chart, moment.chart):
+          if LIST_PLANETS.index(a['second']) < i:
+              # We already have it !
+              continue
+          all_aspects.append(a)
+
+  # from flatlib.ephem import ephem
+  # Next sunrise might be tomorrow, but last sunrise might be 10 min ago!
+  # lastSunrise = ephem.lastSunrise(moment.date, moment.pos)
+  # nextSunset = ephem.nextSunset(lastSunrise, moment.pos)
+  # nextSunrise = ephem.nextSunrise(moment.date, moment.pos)
+  # print("Last sunrise: ", lastSunrise)
+  # print("Next sunset: ", nextSunset)
+  # print("Next sunrise: ", nextSunrise)
 
   return jsonify(all_aspects)
 
