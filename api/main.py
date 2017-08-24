@@ -54,7 +54,7 @@ def geocode():
 
 
 @app.route('/chart', methods=['POST'])
-@crossdomain(origin='https://cat-charts-dashboard.glitch.me/')
+@crossdomain(origin='*')
 def chart():
   name = request.form.get('name')
   if not name:
