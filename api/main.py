@@ -174,12 +174,29 @@ def transits():
   all_aspects = []
   for i in range(len(LIST_PLANETS)):
       p = LIST_PLANETS[i]
+      all_aspects_for_planet = []
+      for a in get_chart_aspects_for_planet(p, moment.chart, person.chart):
+          # if LIST_PLANETS.index(a['second']) < i:
+          #     # We already have it !
+          #     continue
+          all_aspects_for_planet.append(a)
+      smallest_orb_index = -1
+      conjunction_index = -1
+      smallest_orb_amount = 100
+      # Only add the aspect with the smallest orb
+      for i, aspect in enumerate(all_aspects_for_planet):
+        if aspect['orb'] < smallest_orb_amount:
+          smallest_orb_amount = aspect['orb']
+          smallest_orb_index = i
+      # If there's another conjunction aspet, add that too
+      for i, aspect in enumerate(all_aspects_for_planet):
+        if aspect['type'] == 0 and smallest_orb_index != i:
+          conjunction_index = i
+      if smallest_orb_index > -1:
+        all_aspects.append(all_aspects_for_planet[smallest_orb_index])
+      if conjunction_index > -1:
+        all_aspects.append(all_aspects_for_planet[conjunction_index])
 
-      for a in get_chart_aspects_for_planet(p, person.chart, moment.chart):
-          if LIST_PLANETS.index(a['second']) < i:
-              # We already have it !
-              continue
-          all_aspects.append(a)
 
   # from flatlib.ephem import ephem
   # Next sunrise might be tomorrow, but last sunrise might be 10 min ago!
