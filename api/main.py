@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from datetime import datetime, timezone
 from models import *
 from utils import get_chart_aspects_for_planet, crossdomain
+import dateutil.parser
 import geocoder
 import os
 
@@ -151,13 +152,13 @@ def person_aspects():
 @app.route('/transits', methods=['POST'])
 def transits():
   person_timestamp = request.form.get('person_time', 0, type=int)
-  moment_timestamp = request.form.get('moment_time', 0, type=int)
+  moment_date = request.form.get('moment_date', '')
 
-  if person_timestamp == 0 or moment_timestamp == 0:
-    return jsonify({'error': "Invalid input: timestamps"})
+  if person_timestamp == 0 or moment_date == '':
+    return jsonify({'error': "Invalid input: times"})
 
   person_time = datetime.utcfromtimestamp(person_timestamp)
-  moment_time = datetime.utcfromtimestamp(moment_timestamp)
+  moment_time = dateutil.parser.parse("{} 12:00 +0000".format(moment_date))
 
   location_lat = request.form.get('location_lat', 0.0, type=float)
   location_lon = request.form.get('location_lon', 0.0, type=float)
@@ -176,9 +177,6 @@ def transits():
       p = LIST_PLANETS[i]
       all_aspects_for_planet = []
       for a in get_chart_aspects_for_planet(p, moment.chart, person.chart):
-          # if LIST_PLANETS.index(a['second']) < i:
-          #     # We already have it !
-          #     continue
           all_aspects_for_planet.append(a)
       smallest_orb_index = -1
       conjunction_index = -1
