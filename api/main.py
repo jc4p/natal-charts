@@ -139,11 +139,7 @@ def person_aspects():
   all_aspects = []
   for i in range(len(LIST_PLANETS)):
       p = LIST_PLANETS[i]
-
       for a in get_chart_aspects_for_planet(p, first.chart, second.chart):
-          if LIST_PLANETS.index(a['second']) < i:
-              # We already have it !
-              continue
           all_aspects.append(a)
 
   return jsonify(all_aspects)
@@ -186,7 +182,7 @@ def transits():
         if aspect['orb'] < smallest_orb_amount:
           smallest_orb_amount = aspect['orb']
           smallest_orb_index = i
-      # If there's another conjunction aspet, add that too
+      # If there's another conjunction aspect, add that too
       for i, aspect in enumerate(all_aspects_for_planet):
         if aspect['type'] == 0 and smallest_orb_index != i:
           conjunction_index = i
@@ -194,16 +190,6 @@ def transits():
         all_aspects.append(all_aspects_for_planet[smallest_orb_index])
       if conjunction_index > -1:
         all_aspects.append(all_aspects_for_planet[conjunction_index])
-
-
-  # from flatlib.ephem import ephem
-  # Next sunrise might be tomorrow, but last sunrise might be 10 min ago!
-  # lastSunrise = ephem.lastSunrise(moment.date, moment.pos)
-  # nextSunset = ephem.nextSunset(lastSunrise, moment.pos)
-  # nextSunrise = ephem.nextSunrise(moment.date, moment.pos)
-  # print("Last sunrise: ", lastSunrise)
-  # print("Next sunset: ", nextSunset)
-  # print("Next sunrise: ", nextSunrise)
 
   return jsonify(all_aspects)
 
