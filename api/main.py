@@ -18,7 +18,7 @@ def geocode():
   query = request.form.get('q')
   if not query:
     return jsonify({'error': "Invalid input: query"})
-  g = geocoder.google(query, key=GOOGLE_API_KEY)
+  g = geocoder.google(query, params={'key': GOOGLE_API_KEY})
   if not g or g.status != 'OK':
     return jsonify({'error': "Unable to find location"})
 
@@ -36,8 +36,8 @@ def geocode():
   if not timezone_time:
     timezone_time = datetime(time_year, time_month, time_day, time_hour, 0, 0, tzinfo=timezone.utc)
 
-  tz = geocoder.google([g.lat, g.lng], timestamp=timezone_time.timestamp(),
-          method="timezone", key=GOOGLE_API_KEY)
+  tz = geocoder.google([g.lat, g.lng], timestamp=round(timezone_time.timestamp()),
+          method="timezone", params={'key': GOOGLE_API_KEY})
 
   # E.g. -18000 --> -05:00 // 12600 --> +3:30
   tz_offset = tz.rawOffset + tz.dstOffset  # we want to ignore daylight savings for this
