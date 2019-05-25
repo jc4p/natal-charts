@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from datetime import datetime, timezone
 from models import *
 from utils import get_chart_aspects_for_planet, crossdomain
+from transits import get_aspects_for_transits
 import dateutil.parser
 import geocoder
 import os
@@ -170,26 +171,10 @@ def transits():
 
   all_aspects = []
   for i in range(len(LIST_PLANETS)):
-      p = LIST_PLANETS[i]
-      all_aspects_for_planet = []
-      for a in get_chart_aspects_for_planet(p, moment.chart, person.chart):
-          all_aspects_for_planet.append(a)
-      smallest_orb_index = -1
-      conjunction_index = -1
-      smallest_orb_amount = 100
-      # Only add the aspect with the smallest orb
-      for i, aspect in enumerate(all_aspects_for_planet):
-        if aspect['orb'] < smallest_orb_amount:
-          smallest_orb_amount = aspect['orb']
-          smallest_orb_index = i
-      # If there's another conjunction aspect, add that too
-      for i, aspect in enumerate(all_aspects_for_planet):
-        if aspect['type'] == 0 and smallest_orb_index != i:
-          conjunction_index = i
-      if smallest_orb_index > -1:
-        all_aspects.append(all_aspects_for_planet[smallest_orb_index])
-      if conjunction_index > -1:
-        all_aspects.append(all_aspects_for_planet[conjunction_index])
+    p = LIST_PLANETS[i]
+
+    for a in get_aspects_for_transits(p, person.chart, moment.chart):
+      all_aspects.append(a)
 
   return jsonify(all_aspects)
 
