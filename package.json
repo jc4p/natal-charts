@@ -40,7 +40,7 @@
     "file-loader": "^0.10.1",
     "install": "^0.8.7",
     "moment": "^2.17.1",
-    "node-sass": "^4.5.0",
+    "node-sass": "^4.13.1",
     "preact": "^7.2.0",
     "preact-compat": "^3.13.1",
     "sass": "^0.5.0",
