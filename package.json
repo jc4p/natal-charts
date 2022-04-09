@@ -39,7 +39,7 @@
     "css-loader": "^0.26.2",
     "file-loader": "^0.10.1",
     "install": "^0.8.7",
-    "moment": "^2.17.1",
+    "moment": "^2.29.2",
     "node-sass": "^4.5.0",
     "preact": "^7.2.0",
     "preact-compat": "^3.13.1",
