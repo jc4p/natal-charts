@@ -15,6 +15,7 @@ def index():
   return "Hello"
 
 @app.route('/geocode', methods=['POST'])
+@crossdomain(origin='*')
 def geocode():
   query = request.form.get('q')
   if not query:
