@@ -2,6 +2,79 @@ from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
 from flatlib import const, aspects
+import os
+import site
+import sys
+from importlib import resources
+import flatlib.resources
+
+def find_swefiles_path():
+    """Find the Swiss Ephemeris files path that works in both prod and dev"""
+    try:
+        # First try using importlib.resources (most reliable, works in prod)
+        with resources.path('flatlib.resources', 'swefiles') as swefiles_path:
+            if os.path.exists(os.path.join(swefiles_path, 'seas_18.se1')):
+                return str(swefiles_path)
+
+        # Try Heroku-specific paths first (based on runtime.txt)
+        heroku_paths = [
+            # Main Heroku Python path for 3.11
+            '/app/.heroku/python/lib/python3.11/site-packages/flatlib/resources/swefiles',
+            # Fallback Heroku paths
+            f'/app/.heroku/python/lib/python{sys.version_info.major}.{sys.version_info.minor}/site-packages/flatlib/resources/swefiles',
+            '/app/venv/lib/python3.11/site-packages/flatlib/resources/swefiles',
+        ]
+        
+        for path in heroku_paths:
+            if os.path.exists(os.path.join(path, 'seas_18.se1')):
+                return path
+
+        # Try development paths (venv)
+        venv_base = os.path.dirname(os.path.dirname(__file__))
+        dev_paths = [
+            # Look for Python 3.11 first
+            os.path.join(venv_base, 'venv/lib/python3.11/site-packages/flatlib/resources/swefiles'),
+            # Then try current Python version
+            os.path.join(venv_base, 'venv/lib', f'python{sys.version_info.major}.{sys.version_info.minor}', 
+                        'site-packages/flatlib/resources/swefiles'),
+            # Try env instead of venv
+            os.path.join(venv_base, 'env/lib/python3.11/site-packages/flatlib/resources/swefiles'),
+        ]
+
+        for path in dev_paths:
+            if os.path.exists(os.path.join(path, 'seas_18.se1')):
+                return path
+
+        # Try standard system paths
+        system_paths = [
+            # General site-packages for 3.11
+            *[os.path.join(p, 'flatlib', 'resources', 'swefiles') for p in site.getsitepackages()],
+            '/usr/local/lib/python3.11/site-packages/flatlib/resources/swefiles',
+            '/usr/lib/python3.11/site-packages/flatlib/resources/swefiles',
+        ]
+
+        for path in system_paths:
+            if os.path.exists(os.path.join(path, 'seas_18.se1')):
+                return path
+
+        # Check environment variable as last resort
+        env_path = os.getenv('EPHE_PATH')
+        if env_path and os.path.exists(os.path.join(env_path, 'seas_18.se1')):
+            return env_path
+
+        raise FileNotFoundError("Could not find Swiss Ephemeris files in any expected location")
+            
+    except Exception as e:
+        print(f"Warning: Error finding ephemeris files: {str(e)}")
+        return os.getcwd()
+
+# Set up ephemeris path before importing swisseph
+ephe_path = find_swefiles_path()
+os.environ['SE_EPHE_PATH'] = ephe_path
+print(f"Using ephemeris path: {ephe_path}")
+
+import swisseph as swe
+swe.set_ephe_path(ephe_path)
 
 ASPECT_LABELS = {0: 'conjunction', 60: 'sextile', 90: 'square', 120: 'trine', 180: 'opposition'}
 LIST_PLANETS = const.LIST_SEVEN_PLANETS + [const.URANUS, const.NEPTUNE, const.PLUTO, const.ASC]
