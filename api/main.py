@@ -1,13 +1,24 @@
 from flask import Flask, request, jsonify
 from datetime import datetime, timezone
+from flask_cors import CORS
 from models import *
-from utils import get_chart_aspects_for_planet, crossdomain
+from utils import get_chart_aspects_for_planet
 from transits import get_aspects_for_transits
 import dateutil.parser
 import geocoder
 import os
 
 app = Flask(__name__)
+
+# Configure CORS to allow all origins
+CORS(app, resources={
+    r"/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
+
 GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY', '')
 
 @app.route('/')
@@ -15,7 +26,6 @@ def index():
   return "Hello"
 
 @app.route('/geocode', methods=['POST'])
-@crossdomain(origin='*')
 def geocode():
   query = request.form.get('q')
   if not query:
@@ -56,36 +66,38 @@ def geocode():
   })
 
 
-@app.route('/chart', methods=['POST'])
-@crossdomain(origin='*')
+@app.route('/chart', methods=['POST', 'OPTIONS'])
 def chart():
-  name = request.form.get('name')
-  if not name:
-    return jsonify({'error': "Invalid input: name"})
-  
-  birth_year = request.form.get('date_year', -1, type=int)
-  birth_month = request.form.get('date_month', -1, type=int)
-  birth_day = request.form.get('date_day', -1, type=int)
-  birth_hour = request.form.get('date_hour', -1, type=int)
-  birth_min = request.form.get('date_min', 0, type=int)
+    if request.method == "OPTIONS":
+        return jsonify({"status": "ok"})
 
-  for el in [birth_year, birth_month, birth_day, birth_hour]:
-    if el == -1:
-      return jsonify({'error': "Invalid input: birthdate"})
+    name = request.form.get('name')
+    if not name:
+        return jsonify({'error': "Invalid input: name"})
+    
+    birth_year = request.form.get('date_year', -1, type=int)
+    birth_month = request.form.get('date_month', -1, type=int)
+    birth_day = request.form.get('date_day', -1, type=int)
+    birth_hour = request.form.get('date_hour', -1, type=int)
+    birth_min = request.form.get('date_min', 0, type=int)
 
-  birth_lat = request.form.get('location_lat', 0.0, type=float)
-  birth_lon = request.form.get('location_lon', 0.0, type=float)
+    for el in [birth_year, birth_month, birth_day, birth_hour]:
+        if el == -1:
+            return jsonify({'error': "Invalid input: birthdate"})
 
-  if birth_lon == 0.0 or birth_lat == 0.0:
-    return jsonify({'error': "Invalid input: birth geo"})
+    birth_lat = request.form.get('location_lat', 0.0, type=float)
+    birth_lon = request.form.get('location_lon', 0.0, type=float)
 
-  birth_utc_offset = request.form.get('location_utc_offset', '+00:00')
-  
-  birthdate = datetime(birth_year, birth_month, birth_day, birth_hour, birth_min, 0, tzinfo=timezone.utc)
-  person = Person(name, birthdate, birth_lat, birth_lon, birth_utc_offset)
-  chart = NatalChart(person)
+    if birth_lon == 0.0 or birth_lat == 0.0:
+        return jsonify({'error': "Invalid input: birth geo"})
 
-  return jsonify(chart.to_dict())
+    birth_utc_offset = request.form.get('location_utc_offset', '+00:00')
+    
+    birthdate = datetime(birth_year, birth_month, birth_day, birth_hour, birth_min, 0, tzinfo=timezone.utc)
+    person = Person(name, birthdate, birth_lat, birth_lon, birth_utc_offset)
+    chart = NatalChart(person)
+
+    return jsonify(chart.to_dict())
 
 
 @app.route('/day', methods=['POST'])
